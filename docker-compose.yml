@@ -1,0 +1,69 @@
+version: "3.8"
+
+services:
+  front:
+    container_name: laravelnext-front
+    build:
+      context: ./.docker/front
+      dockerfile: Dockerfile
+    ports:
+      - 3000:3000
+    volumes:
+      - ./frontend:/var/www/html/frontend
+    working_dir: /var/www/html/frontend
+    stdin_open: true
+    tty: true
+    depends_on:
+      - nginx
+  nginx:
+    container_name: laravelnext-nginx
+    build:
+      context: ./.docker/nginx
+      dockerfile: Dockerfile
+    ports:
+      - 8000:80
+    working_dir: /var/www/html
+    volumes:
+      - ./:/var/www/html
+    tty: true
+    depends_on:
+      - api
+  api:
+    container_name: laravelnext-api
+    build:
+      context: ./.docker/api
+      dockerfile: Dockerfile
+    volumes:
+      - ./backend:/var/www/html/backend
+    tty: true
+    environment:
+      - APP_ENV=development
+    depends_on:
+      - db
+  db:
+    container_name: laravelnext-db
+    build:
+      context: ./.docker/db
+      dockerfile: Dockerfile
+    ports:
+      - 3306:3306
+    environment:
+      MYSQL_DATABASE: laravelnext
+      MYSQL_USER: laravelnext
+      MYSQL_PASSWORD: password
+      MYSQL_ROOT_PASSWORD: password
+      TZ: "Asia/Tokyo"
+    volumes:
+      - db-volume:/var/lib/mysql:cached
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: laravelnext-phpmyadmin
+    platform: linux/amd64/v8
+    hostname: phpmyadmin
+    depends_on:
+      - db
+    ports:
+      - "5005:80"
+
+volumes:
+  db-volume:
